@@ -1,12 +1,16 @@
 GoCD build status notifier plugins
 =================================
 
-## How to package
+## Requirements
 
-```
-mvn clean package
-```
+These plugins require GoCD version >= v15.x or above
 
-## How to install
+## Get Started
 
-copy the jar to <GOCD_HOME>/plugins/extrnal/
+### Installation:
+
+Download the latest plugin jar from Releases section. Place it in <go-server-location>/plugins/external & restart Go Server.
+
+## Configuration
+
+> todo
