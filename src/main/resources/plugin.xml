@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<go-plugin id="lean.status.notifier" version="1">
+    <about>
+        <name>GoCD status change notifier</name>
+        <version>0.1</version>
+        <target-go-version>15.2.0</target-go-version>
+        <description>Updates build status data to leansw platform</description>
+        <vendor>
+            <name>yunlzheng</name>
+            <url>https://github.com/srinivasupadhya/gocd-build-status-notifier</url>
+        </vendor>
+    </about>
+</go-plugin>
