@@ -13,6 +13,7 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.tw.go.plugin.utils.HttpUtils;
 import com.tw.go.plugin.utils.JSONUtils;
 import org.apache.commons.io.IOUtils;
+import org.bson.Document;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,8 +52,6 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
     @Override
     public GoPluginApiResponse handle(GoPluginApiRequest goPluginApiRequest) throws UnhandledRequestTypeException {
         String requestName = goPluginApiRequest.requestName();
-
-        System.out.println("->>>>>>>>" + requestName);
 
         if (requestName.equals(PLUGIN_SETTINGS_GET_CONFIGURATION)) {
             return handleGetPluginSettingsConfiguration();
@@ -99,7 +98,17 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
     private GoPluginApiResponse handleStageNotification(GoPluginApiRequest goPluginApiRequest) {
         Map<String, Object> dataMap = (Map<String, Object>) JSONUtils.fromJSON(goPluginApiRequest.requestBody());
-        System.out.println(dataMap.toString());
+
+        Document document = Document.parse(goPluginApiRequest.requestBody());
+        Document pipeline = (Document) document.get("pipeline");
+
+        if (pipeline.containsKey("stage")) {
+            Document stage = (Document) pipeline.get("stage");
+            pipeline.remove("stage");
+            pipeline.append("stages", Arrays.asList(stage));
+        }
+
+        Document request = new Document("pipeline", pipeline);
 
         Map<String, Object> response = new HashMap<String, Object>();
         List<String> messages = new ArrayList<String>();
