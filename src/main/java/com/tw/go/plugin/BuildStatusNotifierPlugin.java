@@ -100,20 +100,13 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         Map<String, Object> dataMap = (Map<String, Object>) JSONUtils.fromJSON(goPluginApiRequest.requestBody());
 
         Document document = Document.parse(goPluginApiRequest.requestBody());
-        Document pipeline = (Document) document.get("pipeline");
-
-        if (pipeline.containsKey("stage")) {
-            Document stage = (Document) pipeline.get("stage");
-            pipeline.remove("stage");
-            pipeline.append("stages", Arrays.asList(stage));
-        }
-
-        Document request = new Document("pipeline", pipeline);
 
         Map<String, Object> response = new HashMap<String, Object>();
         List<String> messages = new ArrayList<String>();
 
         int responseCode = SUCCESS_RESPONSE_CODE;
+        response.put("status", "success");
+
         try {
             PluginSettings pluginSettings = getPluginSettings();
             HttpUtils.doPost(pluginSettings.getServerBaseURL(), goPluginApiRequest.requestBody());
