@@ -97,10 +97,6 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
     }
 
     private GoPluginApiResponse handleStageNotification(GoPluginApiRequest goPluginApiRequest) {
-        Map<String, Object> dataMap = (Map<String, Object>) JSONUtils.fromJSON(goPluginApiRequest.requestBody());
-
-        Document document = Document.parse(goPluginApiRequest.requestBody());
-
         Map<String, Object> response = new HashMap<String, Object>();
         List<String> messages = new ArrayList<String>();
 
@@ -110,6 +106,7 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         try {
             PluginSettings pluginSettings = getPluginSettings();
             HttpUtils.doPost(pluginSettings.getServerBaseURL(), goPluginApiRequest.requestBody());
+
         } catch (Exception e) {
             responseCode = INTERNAL_ERROR_RESPONSE_CODE;
             response.put("status", "failure");
