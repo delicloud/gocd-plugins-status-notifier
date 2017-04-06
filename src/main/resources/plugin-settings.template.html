@@ -1,4 +1,14 @@
 <div class="form_item_block">
+    <label>GoCD Auth Username:</label>
+    <input type="text" ng-model="gocd_username" ng-required="true"/>
+    <span class="form_error" ng-show="GOINPUTNAME[gocd_username].$error.server">{{ GOINPUTNAME[gocd_username].$error.server }}</span>
+</div>
+<div class="form_item_block">
+    <label>GoCD Auth Password:</label>
+    <input type="password" ng-model="gocd_password" ng-required="true"/>
+    <span class="form_error" ng-show="GOINPUTNAME[gocd_password].$error.server">{{ GOINPUTNAME[gocd_password].$error.server }}</span>
+</div>
+<div class="form_item_block">
     <label>Lean Platform Base URL:</label>
     <input type="text" ng-model="server_base_url" ng-required="true"/>
     <span class="form_error" ng-show="GOINPUTNAME[server_base_url].$error.server">{{ GOINPUTNAME[server_base_url].$error.server }}</span>

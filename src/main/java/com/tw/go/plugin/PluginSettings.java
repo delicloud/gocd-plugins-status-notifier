@@ -1,13 +1,12 @@
 package com.tw.go.plugin;
 
 public class PluginSettings {
+
+    private String userName;
+    private String password;
     private String serverBaseURL;
 
     public PluginSettings() {
-    }
-
-    public PluginSettings(String serverBaseURL) {
-        this.serverBaseURL = serverBaseURL;
     }
 
     public String getServerBaseURL() {
@@ -16,6 +15,24 @@ public class PluginSettings {
 
     public void setServerBaseURL(String serverBaseURL) {
         this.serverBaseURL = serverBaseURL;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public PluginSettings setUserName(String userName) {
+        this.userName = userName;
+        return this;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public PluginSettings setPassword(String password) {
+        this.password = password;
+        return this;
     }
 
     @Override
