@@ -1,6 +1,5 @@
 package com.tw.go.plugin;
 
-import com.google.gson.GsonBuilder;
 import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
 import com.thoughtworks.go.plugin.api.GoPlugin;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
@@ -13,24 +12,25 @@ import com.thoughtworks.go.plugin.api.request.GoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
+
+import com.google.gson.GsonBuilder;
 import com.tw.go.plugin.utils.HttpUtils;
 import com.tw.go.plugin.utils.JSONUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.w3c.dom.Document;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
-import java.util.*;
-
-import static java.util.Arrays.asList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Extension
 public class BuildStatusNotifierPlugin implements GoPlugin {
 
     public static final String EXTENSION_NAME = "notification";
-    public static final List<String> goSupportedVersions = asList("1.0");
+    public static final List<String> goSupportedVersions = Collections.singletonList("1.0");
     public static final String PLUGIN_ID = "lean.status.notifier";
 
     public static final String GET_PLUGIN_SETTINGS = "go.processor.plugin-settings.get";
@@ -42,17 +42,13 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
     public static final String REQUEST_STAGE_STATUS = "stage-status";
 
-    public static final String GOCD_USERNAME = "gocd_username";
-    public static final String GOCD_PASSWORD = "gocd_password";
+    public static final String GOCD_SERVER_ID = "gocd_server_id";
     public static final String PLUGIN_SETTINGS_SERVER_BASE_URL = "server_base_url";
 
     public static final int NOT_FOUND_RESPONSE_CODE = 404;
     public static final int SUCCESS_RESPONSE_CODE = 200;
     public static final int INTERNAL_ERROR_RESPONSE_CODE = 500;
 
-    public static final String CONFIG_XML_URL = "http://localhost:8153/go/api/admin/config.xml";
-
-    private String serverID;
 
     private final static Logger LOGGER = Logger.getLoggerFor(BuildStatusNotifierPlugin.class);
 
@@ -61,59 +57,6 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
     @Load
     public void onLoad(PluginContext context) {
         LOGGER.info("====== Init BuildStatusNotifierPlugin ====");
-    }
-
-    private String getServerIdFromServer() {
-
-        HttpResponse response = getServerConfig();
-        if (null == response) {
-            LOGGER.error("Can not get server config.xml file.");
-            return null;
-        }
-        try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document document = db.parse(response.getEntity().getContent());
-            return getServerIdFromConfigXml(document);
-        } catch (Exception e) {
-            LOGGER.error("Can not parse server config.xml file.", e);
-        }
-        return null;
-    }
-
-    public String getServerID() {
-        if (serverID == null) {
-            String id = getServerIdFromServer();
-            setServerID(id);
-            return id;
-        } else {
-            return serverID;
-        }
-    }
-
-    private String getServerIdFromConfigXml(Document document) {
-        return document.getDocumentElement()
-                .getElementsByTagName("server")
-                .item(0)
-                .getAttributes()
-                .getNamedItem("serverId")
-                .getNodeValue();
-    }
-
-    private HttpResponse getServerConfig() {
-        PluginSettings pluginSettings = getPluginSettings();
-        try {
-            LOGGER.info("Log in with username: " + pluginSettings.getUserName());
-            HttpResponse response = HttpUtils.doGetWithGoCDAuth(CONFIG_XML_URL, pluginSettings.getUserName(), pluginSettings.getPassword());
-            if (response.getStatusLine().getStatusCode() != 200) {
-                LOGGER.error("Can not get server config.xml file. status code: " + response.getStatusLine().getStatusCode());
-                throw new RuntimeException("Getting Error when fetch server config.xml. Maybe your username or password is not correct.");
-            }
-            return response;
-        } catch (Exception e) {
-            LOGGER.error("Can not get server config.xml file. error: ", e);
-        }
-        return null;
     }
 
 
@@ -153,15 +96,15 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
     private GoPluginApiResponse handleGetPluginSettingsConfiguration() {
         Map<String, Object> response = new HashMap<String, Object>();
-        response.put(GOCD_USERNAME, createField("GoCD Auth Username:", "admin", true, false, "0"));
-        response.put(GOCD_PASSWORD, createField("GoCD Auth Password:", "badger", true, true, "0"));
+        response.put(GOCD_SERVER_ID, createField("GoCD Server Id:", " ", true, false, "0"));
         response.put(PLUGIN_SETTINGS_SERVER_BASE_URL, createField("Server Base URL", null, true, false, "0"));
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
     private GoPluginApiResponse handleGetPluginSettingsView() throws IOException {
         Map<String, Object> response = new HashMap<String, Object>();
-        response.put("template", IOUtils.toString(getClass().getResourceAsStream("/plugin-settings.template.html"), "UTF-8"));
+        response.put("template", IOUtils.toString(getClass().getResourceAsStream("/plugin-settings.template.html"),
+            "UTF-8"));
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
@@ -180,7 +123,8 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
         try {
             PluginSettings pluginSettings = getPluginSettings();
-            HttpUtils.doPostWithServerID(pluginSettings.getServerBaseURL(), goPluginApiRequest.requestBody(), getServerID());
+            HttpUtils.doPostWithServerID(pluginSettings.getServerBaseURL(), goPluginApiRequest.requestBody(),
+                pluginSettings.getServerId());
 
         } catch (Exception e) {
             responseCode = INTERNAL_ERROR_RESPONSE_CODE;
@@ -197,7 +141,8 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
-    private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired, boolean isSecure, String displayOrder) {
+    private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired, boolean
+        isSecure, String displayOrder) {
         Map<String, Object> fieldProperties = new HashMap<String, Object>();
         fieldProperties.put("display-name", displayName);
         fieldProperties.put("default-value", defaultValue);
@@ -211,17 +156,16 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         Map<String, Object> requestMap = new HashMap<String, Object>();
         requestMap.put("plugin-id", PLUGIN_ID);
         GoApiResponse response = goApplicationAccessor.submit(
-                createGoApiRequest(GET_PLUGIN_SETTINGS, JSONUtils.toJSON(requestMap))
+            createGoApiRequest(GET_PLUGIN_SETTINGS, JSONUtils.toJSON(requestMap))
         );
 
         Map<String, String> responseBodyMap = response.responseBody() == null ?
-                new HashMap<String, String>() :
-                (Map<String, String>) JSONUtils.fromJSON(response.responseBody());
+            new HashMap<String, String>() :
+            (Map<String, String>) JSONUtils.fromJSON(response.responseBody());
 
         PluginSettings settings = new PluginSettings();
         settings.setServerBaseURL(responseBodyMap.get(PLUGIN_SETTINGS_SERVER_BASE_URL));
-        settings.setUserName(responseBodyMap.get(GOCD_USERNAME));
-        settings.setPassword(responseBodyMap.get(GOCD_PASSWORD));
+        settings.setServerId(responseBodyMap.get(GOCD_SERVER_ID));
         return settings;
     }
 
@@ -283,8 +227,4 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         };
     }
 
-
-    public void setServerID(String serverID) {
-        this.serverID = serverID;
-    }
 }

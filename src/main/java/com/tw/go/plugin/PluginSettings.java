@@ -2,8 +2,7 @@ package com.tw.go.plugin;
 
 public class PluginSettings {
 
-    private String userName;
-    private String password;
+    private String serverId;
     private String serverBaseURL;
 
     public PluginSettings() {
@@ -17,23 +16,15 @@ public class PluginSettings {
         this.serverBaseURL = serverBaseURL;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getServerId() {
+        return serverId;
     }
 
-    public PluginSettings setUserName(String userName) {
-        this.userName = userName;
+    public PluginSettings setServerId(String serverId) {
+        this.serverId = serverId;
         return this;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public PluginSettings setPassword(String password) {
-        this.password = password;
-        return this;
-    }
 
     @Override
     public boolean equals(Object o) {
